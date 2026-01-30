@@ -39,20 +39,31 @@ def get_img_name(request):
     img_name = request.json()["message"].split('/')[-1]
     return img_name
 
+#Удаление папки с породой
+def delete_folder():
+    params = {
+        'path': f'Backup/{breed}',
+        'permanently': 'False'
+    }
+    headers = {'Authorization': TOKEN}
+    requests.delete('https://cloud-api.yandex.net/v1/disk/resources', headers=headers, params=params)
+
+
 TOKEN = get_Token()
 base_url = 'https://dog.ceo/api'
+create_folder(f'Backup')
 
 breed = input('Введите породу собаки на английском языке: ').strip().lower()
 logging.info(f"Введена информация о породе {breed}")
 
+resp1 = requests.get(f'{base_url}/breed/{breed}/images/random')
 
-create_folder(f'Backup')
 create_folder(f'Backup/{breed}')
 logging.info(f"Создана папка {breed} по пути Backup/")
 
-resp1 = requests.get(f'{base_url}/breed/{breed}/images/random')
-
 if resp1.status_code != 200:
+    delete_folder()
+    logging.info(f'Папка {breed} удалена')
     logging.error(resp1.json()["message"])
     sys.exit(resp1.json()["message"])
 
@@ -81,7 +92,7 @@ for sup_b in sup_breed:
     logging.info(f"Загружена картинка {img_sub_name} на Яндекс Диск под наименованием {sup_b}_{img_sub_name}")
 
 
-print(f'Проверьте Яндекс Диск по пути Backup/')
+print(f'Проверьте Яндекс Диск по пути Backup/{breed}')
 logging.info("Конец программы")
 sys.exit(0)
 
