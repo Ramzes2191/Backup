@@ -31,15 +31,16 @@ def upload_img_breed(path, url):
                   headers=headers)
 
 
-# Получить ссылку
-def get_url(request):
-    url = request.json()['message']
-    return url
+# Получить ссылку на картинку
+def get_img_url(url):
+    response = requests.get(url)
+    img_url = response.json()['message']
+    return img_url
 
 
 # Получить название картинки
-def get_img_name(request):
-    img_name = request.json()['message'].split('/')[-1]
+def get_img_name(img_url):
+    img_name = img_url.split('/')[-1]
     return img_name
 
 
@@ -56,7 +57,7 @@ BASE_URL = 'https://dog.ceo/api'
 
 logging.basicConfig(level=logging.INFO,
                     filename='py_log.log',
-                    filemode='a',
+                    filemode='w',
                     encoding='utf-8',
                     format='%(asctime)s %(levelname)s %(message)s')
 create_folder(f'Backup')
@@ -64,21 +65,19 @@ breed = input('Введите породу собаки на английско�
 check_breed(breed)
 create_folder(f'Backup/{breed}')
 logging.info(f'Создана папка {breed} по пути Backup/')
-resp1 = requests.get(f'{BASE_URL}/breed/{breed}/images/random')
-image_url = get_url(resp1)
+image_url = get_img_url(f'{BASE_URL}/breed/{breed}/images/random')
 logging.info(f'Ссылка на картинку {image_url} породы {breed}')
-image_name = get_img_name(resp1)
+image_name = get_img_name(image_url)
 logging.info(f'Название картинки = {image_name}')
 upload_img_breed(f'Backup/{breed}/{breed}_{image_name}', image_url)
 logging.info(f'Загружена картинка {breed}_{image_name} на Яндекс Диск')
-resp2 = requests.get(f'{BASE_URL}/breed/{breed}/list')
-sup_breed = get_url(resp2)
+sup_breed = get_img_url(f'{BASE_URL}/breed/{breed}/list')
 logging.info(f'Информация о под-породе(-ах) {sup_breed}')
 for sup_b in sup_breed:
-    resp3 = requests.get(f'{BASE_URL}/breed/{breed}/{sup_b}/images/random')
-    image_breed_url = get_url(resp3)
+    image_breed_url = get_img_url(f'{BASE_URL}/breed/{breed}/'
+                                  f'{sup_b}/images/random')
     logging.info(f'Ссылка на картинку {image_breed_url} под-породы {sup_b}')
-    img_sub_name = get_img_name(resp3)
+    img_sub_name = get_img_name(image_breed_url)
     upload_img_breed(f'Backup/{breed}/{sup_b}_{img_sub_name}',
                      {image_breed_url})
     logging.info(f'Загружена картинка {img_sub_name} '
