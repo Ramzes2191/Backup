@@ -19,7 +19,7 @@ def create_folder(path):
                  headers=headers)
 
 
-# Загрузить картинку
+# Загрузить картинки
 def upload_img_breed(path, url):
     params = {
         'path': path,
@@ -31,17 +31,20 @@ def upload_img_breed(path, url):
                   headers=headers)
 
 
-# Получить ссылку на картинку
-def get_img_url(url):
-    response = requests.get(url)
-    img_url = response.json()['message']
-    return img_url
-
-
-# Получить название картинки
-def get_img_name(img_url):
-    img_name = img_url.split('/')[-1]
-    return img_name
+# Получить ссылки на картинки
+def get_img_url():
+    img_urls = []
+    response1 = requests.get(f'{BASE_URL}/breed/{breed}/images/random')
+    url1 = response1.json()['message']
+    img_urls.append(url1)
+    response2 = requests.get(f'{BASE_URL}/breed/{breed}/list')
+    sup_breeds = response2.json()['message']
+    for sup_b in sup_breeds:
+        response3 = requests.get(f'{BASE_URL}/breed/{breed}/'
+                                 f'{sup_b}/images/random')
+        urls = response3.json()['message']
+        img_urls.append(urls)
+    return img_urls
 
 
 # Проверка наличия породы
@@ -61,27 +64,18 @@ logging.basicConfig(level=logging.INFO,
                     encoding='utf-8',
                     format='%(asctime)s %(levelname)s %(message)s')
 create_folder(f'Backup')
+logging.info('Создана папка Backup')
 breed = input('Введите породу собаки на английском языке: ').strip().lower()
+logging.info(f'Введена порода {breed}')
 check_breed(breed)
 create_folder(f'Backup/{breed}')
-logging.info(f'Создана папка {breed} по пути Backup/')
-image_url = get_img_url(f'{BASE_URL}/breed/{breed}/images/random')
-logging.info(f'Ссылка на картинку {image_url} породы {breed}')
-image_name = get_img_name(image_url)
-logging.info(f'Название картинки = {image_name}')
-upload_img_breed(f'Backup/{breed}/{breed}_{image_name}', image_url)
-logging.info(f'Загружена картинка {breed}_{image_name} на Яндекс Диск')
-sup_breed = get_img_url(f'{BASE_URL}/breed/{breed}/list')
-logging.info(f'Информация о под-породе(-ах) {sup_breed}')
-for sup_b in sup_breed:
-    image_breed_url = get_img_url(f'{BASE_URL}/breed/{breed}/'
-                                  f'{sup_b}/images/random')
-    logging.info(f'Ссылка на картинку {image_breed_url} под-породы {sup_b}')
-    img_sub_name = get_img_name(image_breed_url)
-    upload_img_breed(f'Backup/{breed}/{sup_b}_{img_sub_name}',
-                     {image_breed_url})
-    logging.info(f'Загружена картинка {img_sub_name} '
-                 f'на Яндекс Диск под наименованием {sup_b}_{img_sub_name}')
+logging.info(f'Создана папка Backup/{breed}')
+img_urls = get_img_url()
+logging.info(f'Получены ссылки на картинки {img_urls}')
+for img_u in img_urls:
+    img_name = f'{img_u.split('/')[-2]}_{img_u.split('/')[-1]}'
+    upload_img_breed(f'Backup/{breed}/{img_name}', img_u)
+    logging.info(f'Загружена картинка {img_name} по ссылке {img_u}')
 print(f'Проверьте Яндекс Диск по пути https://disk.yandex.ru/d/OXF5XyKWSykOKg')
 logging.info('Конец программы')
 sys.exit(0)
